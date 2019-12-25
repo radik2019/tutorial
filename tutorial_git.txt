@@ -1,0 +1,16 @@
+
+
+----------------------------------
+git remote add origin https://github.com/radik2019/nome.git
+git push -u origin master
+_________________________
+
+
+
+									
+---------------------------------- git 
+remote add origin 
+https://github.com/radik2019/nome.git 
+git push -u origin master 
+________________00______
+		
