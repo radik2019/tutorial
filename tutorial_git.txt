@@ -14,4 +14,13 @@ git diff
 git log --graph
 git tag <<nome>>
 git checkout <<nome tag>>
+
+-----------------------------------
+
+
+git config --global credential.helper store
+
+con il prossimo accesso a github il token sara memorizzato
+
+
 		
