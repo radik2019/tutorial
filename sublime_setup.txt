@@ -1,0 +1,27 @@
+
+
+How to Setup Sublime Text 3 with Python and interactive mode - SublimeREPL
+
+
+Python Build Code: 
+
+{
+    "cmd": ["C:/Program Files/Python35/python.exe", "-u", "$file"],
+    "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+    "selector": "source.python"
+}
+
+
+REPL Build Code:
+
+{
+    "target": "run_existing_window_command", 
+    "id": "repl_python_run",
+    "file": "config/Python/Main.sublime-menu"
+}
+
+SublimeREPL is a plugin for Sublime Text  that lets you run interactive interpreters of several languages within a normal editor tab. It also allows connecting to a running remote interpreter (e.g. Clojure/Lein) though a telnet port.
+
+Sublime Text is a sophisticated text editor for code, markup and prose. You'll love the slick user interface, extraordinary features and amazing performance.
+
+
