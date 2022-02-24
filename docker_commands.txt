@@ -381,10 +381,14 @@
   	docker build . -t radik1981/radiks_web_site:v.1.0 
 
 --------------------------------------------------------------------------------
+	
+	# arrestato il container viene eliminato (--rm)
+	docker run -it -p 8000:8000 --rm radik1981/elctronics_web_site:v0.1
 
-
-
-
+	# si da un nome al container 
+	docker run -it -p 8000:8000 --rm --name name_of_mycontainer radik1981/elctronics_web_site:v0.1
+	
+--------------------------------------------------------------------------------
 
 
 

@@ -1,0 +1,6 @@
+	conda create -n my_project
+	conda activate my_project
+
+# lista dei environment
+	conda env list
+
