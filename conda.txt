@@ -4,3 +4,6 @@
 # lista dei environment
 	conda env list
 
+
+# non attivare automaticamente (base)
+conda config --set auto_activate_base false

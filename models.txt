@@ -1,0 +1,48 @@
+In [4]: alex = Customer.objects.get(pk=4)
+In [5]: alex
+Out[5]: <Customer: Alex Karpov>
+
+
+
+
+
+In [12]: Cart.objects.create(customer=alex)
+Out[12]: <Cart: Alex Karpov>
+
+
+
+In [13]: alex_cart = Cart.objects.get(customer=alex)
+Out[13]: <Cart: Alex Karpov>
+
+In [20]: alex_cart.items.all()
+Out[20]: <QuerySet []>
+
+
+In [49]: prod = Product.objects.get(pk=4)
+In [50]: df = CartItem.objects.create(cart=alex_cart, product=prod, count=23)
+
+
+In [54]: df
+Out[54]: <CartItem: 999>
+
+In [55]: df.cart
+Out[55]: <Cart: Alex Karpov>
+
+In [56]: df.cart.customer
+Out[56]: <Customer: Alex Karpov>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
