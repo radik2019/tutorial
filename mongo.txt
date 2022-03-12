@@ -1,0 +1,52 @@
+show dbs
+use new_database
+
+# new collection
+
+
+
+
+
+
+
+
+db.__proto__                 db.constructor               db.hasOwnProperty            db.isPrototypeOf             db.propertyIsEnumerable
+db.toLocaleString            db.toString                  db.valueOf                   db.getMongo                  db.getName
+db.getCollectionNames        db.getCollectionInfos        db.runCommand                db.adminCommand              db.aggregate
+db.getSiblingDB              db.getCollection             db.dropDatabase              db.createUser                db.updateUser
+db.changeUserPassword        db.logout                    db.dropUser                  db.dropAllUsers              db.auth
+db.grantRolesToUser          db.revokeRolesFromUser       db.getUser                   db.getUsers                  db.createCollection
+db.createView                db.createRole                db.updateRole                db.dropRole                  db.dropAllRoles
+db.grantRolesToRole          db.revokeRolesFromRole       db.grantPrivilegesToRole     db.revokePrivilegesFromRole  db.getRole
+db.getRoles                  db.currentOp                 db.killOp                    db.shutdownServer            db.fsyncLock
+db.fsyncUnlock               db.version                   db.serverBits                db.isMaster                  db.hello
+db.serverBuildInfo           db.serverStatus              db.stats                     db.hostInfo                  db.serverCmdLineOpts
+db.rotateCertificates        db.printCollectionStats      db.getFreeMonitoringStatus   db.disableFreeMonitoring     db.enableFreeMonitoring
+db.getProfilingStatus        db.setProfilingLevel         db.setLogLevel               db.getLogComponents          db.commandHelp
+db.listCommands              db.sql
+
+db.collection_name.insert({name: "Maria"})
+
+********************************************************************************************************************************
+db.collection_name.
+
+db.radu.__proto__                  db.radu.constructor                db.radu.hasOwnProperty             db.radu.isPrototypeOf
+db.radu.propertyIsEnumerable       db.radu.toLocaleString             db.radu.toString                   db.radu.valueOf
+db.radu.aggregate                  db.radu.bulkWrite                  db.radu.countDocuments             db.radu.deleteMany
+db.radu.deleteOne                  db.radu.distinct                   db.radu.estimatedDocumentCount     db.radu.find
+db.radu.findOne                    db.radu.renameCollection           db.radu.findOneAndDelete           db.radu.findOneAndReplace
+db.radu.findOneAndUpdate           db.radu.insertMany                 db.radu.insertOne                  db.radu.isCapped
+db.radu.replaceOne                 db.radu.updateMany                 db.radu.updateOne                  db.radu.convertToCapped
+db.radu.createIndexes              db.radu.createIndex                db.radu.ensureIndex                db.radu.getIndexes
+db.radu.getIndexSpecs              db.radu.getIndices                 db.radu.getIndexKeys               db.radu.dropIndexes
+db.radu.dropIndex                  db.radu.totalIndexSize             db.radu.reIndex                    db.radu.getDB
+db.radu.getMongo                   db.radu.dataSize                   db.radu.storageSize                db.radu.totalSize
+db.radu.drop                       db.radu.exists                     db.radu.getFullName                db.radu.getName
+db.radu.runCommand                 db.radu.explain                    db.radu.stats                      db.radu.latencyStats
+db.radu.initializeOrderedBulkOp    db.radu.initializeUnorderedBulkOp  db.radu.getPlanCache               db.radu.validate
+db.radu.hideIndex                  db.radu.unhideIndex
+
+
+********************************************************************************************************************************
+
+
