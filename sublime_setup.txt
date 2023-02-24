@@ -23,5 +23,9 @@ REPL Build Code:
 SublimeREPL is a plugin for Sublime Text  that lets you run interactive interpreters of several languages within a normal editor tab. It also allows connecting to a running remote interpreter (e.g. Clojure/Lein) though a telnet port.
 
 Sublime Text is a sophisticated text editor for code, markup and prose. You'll love the slick user interface, extraordinary features and amazing performance.
+---------------------------------------------------------------------------------------------------------
+
+
+autocompletion for python: "jedy" 
 
 
