@@ -1,0 +1,17 @@
+
+generare copia di chiavi (chiave PUBLICA, e chaive privata)
+
+					ALTERNATIVA 1
+ssh -i ~/.ssh/my_privat_key user@192.168.1.100
+	accesso senza password
+
+
+					ALTERNATIVA 2
+ssh-copy-id user@192.168.1.100
+	si salva la chaive publica di "user" nel file 'authorized'
+
+					ALTERNATIVA 3
+copia la propria chaive publica e incolala nel file '~/.ssh/authorized'
+del' "user"
+
+
