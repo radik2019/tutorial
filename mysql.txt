@@ -1,0 +1,59 @@
+
+
+
+
+
+
+sudo mysql
+mysql>  SHOW DATABASES;
+mysql>  CREATE DATABASE name_of_database;
+
+
+
+#####################################   CREATE A NEW ACCOUNT   ###########################################
+
+**************************	CREATE A NEW ACCOUNT  ******************************************8
+mysql>  CREATE USER 'your_username'@'localhost' IDENTIFIED WITH mysql_native_password BY 'toure_new_password';
+mysql>  GRANT ALL ON blog_data.* TO 'djangouser'@'localhost';
+mysql>  FLUSH PRIVILEGES;
+
+
+*************************************	OR     **************************
+
+sudo mysql -u root -p -e "grant all privileges on *.* to 'youre_username'@'%' identified by 'password' with grant option";
+
+
+###########################################################################################################
+sudo vim /etc/mysql/my.cnf
+
+[client]
+database = blog_data
+user = djangouser
+password = your_actual_password
+default-character-set = utf8
+
+
+************************************* ALLOW PORT ************************************* 
+sudo ufw allow 3306/tcp
+
+
+sudo systemctl daemon-reload
+sudo systemctl restart mysql
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
