@@ -10,7 +10,7 @@ mysql>  CREATE DATABASE name_of_database;
 
 
 
-#####################################   CREATE A NEW ACCOUNT   ###########################################
+#####################################   CREATE A NEW ACCOUNT   ############################################
 
 **************************	CREATE A NEW ACCOUNT  ******************************************8
 mysql>  CREATE USER 'your_username'@'localhost' IDENTIFIED WITH mysql_native_password BY 'toure_new_password';
@@ -42,16 +42,30 @@ sudo systemctl restart mysql
 
 
 
+############################################    DJANGO   ##################################################
+
+************************************* INSTALL DEPENDECIES ************************************* 
+
+    sudo apt install mysqlclient
+    sudo apt install libmysqlclient-dev default-libmysqlclient-dev
+    pip install wheel
+    pip install mysqlclient
+
+************************************* MODIFY config.py ************************************* 
 
 
 
 
-
-
-
-
-
-
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql', 
+        'NAME': 'database_name',
+        'USER': 'username',
+        'PASSWORD': 'password',
+        'HOST': 'ip_address',
+        'PORT': '3306',
+    }
+}
 
 
 
