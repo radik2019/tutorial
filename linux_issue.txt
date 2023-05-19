@@ -1,0 +1,7 @@
+
+
+# controllare se la porta è occupata
+	sudo lsof -i -P -n | grep 5440
+	sudo kill [port]
+
+
