@@ -1,0 +1,80 @@
+
+
+
+------------------------------------IMPOSTAZIONI PYCHARM-------------------------------------------
+1.Creare il docker:
+PyCharm/Preferences/Build, Execution, Deployment/Docker
+dare un nome e Apply e OK
+
+2.Settare django:
+PyCharm/Preferences/Languages & Frameworks/Django/
+I campi importanti sono:
+Settings => deve puntare al file base.py (se il progetto è creato con Cookie cutter)
+(nel file dei settings c'è DJANGO_APPS
+Manage Script => deve puntare al file manage.py
+
+3.Fare la build:
+docker-compose -f local.yml build (questo comando può variare)
+
+4.creare l'interprete python:
+PyCharm/Preferences/Project:>nome progetto>/Python Interpreter/rotellina opzioni/Add/Docker Compose
+Configuration files/+/cercare local.yml(in questo caso, parte in locale, sarebbe il file docker-compose.yml)
+Service: django
+Python Interpreter Path: python3
+OK Apply OK
+Edit configurations
+Cliccare a fianco all'icona verde Play/Edit configurations/
+Name se c'è runserver se no scegline uno
+Host: 0.0.0.0
+Port: 8000
+Add configuration
+Cliccare a fianco all'icona verde Play/add configuration/
+Scegliere django server
+Avvia il progetto:
+docker-compose -f local.yml up
+
+5.Fare le migrazioni (se non le fa automaticamente con l'up):
+entrare nel container docker:
+docker ps
+cercare il container dell'app e copiare l'id
+docker exec -it <id-container> bash
+python3 manage.py migrate
+6.Creare superuser:
+entrare nel container docker:
+docker ps
+cercare il container dell'app e copiare l'id
+docker exec -it <id-container> bash
+ls (dobbiamo essere nella cartella dove c'è manage.py)
+python3 manage.py createsuperuser
+--------------------------------------------------------------------------------------------------------
+
+
+
+************************************* RESET DEL BACKUP DEL DB ****************************************** 
+Ultimo backup prodotto da cron 02/05/2023:
+1. Copia del backup nel container
+	docker cp {path_to_db_backup}/turmotravel_db_20230502_094501.binary {hash_docker_db_container}}:backup.tar.gz
+	docker cp $DB_BACKUP {hash_docker_db_container}}:backup.tar.gz
+
+2. creare una nuova connessione sul "DBeaver"
+	- Host: 	 localhost
+	- Database:	 postgres
+	- Port:  	 5440
+	CREDENZIALI (.envs/.local/.postgres):
+		Username:	{POSTGRES_USER}
+		Password:	{POSTGRES_PASSWORD}
+
+3. con db_veaver ci connettiamo al db e si esegue questa query:
+	CREATE ROLE postgres WITH LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE REPLICATION;
+
+4.aprire il container del database e esegui il commando per eseguire il restore del backup del db:
+	pg_restore -Fc -U postgres -d turmotravel -c < backup.tar.gz
+
+5.Entrare nel container "turmo_travel" e esegui
+	-Crea un superuser
+		docker exec -it turmo_travel python3 manage.py createsuperuser
+	-Migrazioni:
+		docker exec turmo_travel python3 manage.py migrate
+		docker exec turmo_travel python3 manage.py makemigrations
+
+*******************************************************************************************************
