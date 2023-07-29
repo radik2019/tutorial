@@ -20,5 +20,5 @@ alias git_log="git log --graph --all --oneline"
 alias docker_kill_all="docker stop $(docker ps -aq)"
 export DB_BACKUP="/home/radik/Desktop/projects/django/backup_db/root/backup-turmotravel/postgres/20230502_094501/turmotravel_db_20230502_094501.binary"
 
-
+ZSH_THEME="itchy"
 
