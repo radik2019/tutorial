@@ -1,0 +1,41 @@
+
+Host msi
+    Hostname 192.168.1.83
+    Port 22
+    user radik
+Host jumper
+    Hostname 192.168.1.59
+    Port 22
+    User radik1981
+
+Host lidia
+    Hostname 192.168.1.211
+    Port 22
+    User kubuntu
+Host huawei
+    Hostname 192.168.1.50
+    Port 8022
+    User u0_a270
+Host pi
+    Hostname 192.168.1.68
+    port 22
+    User pi
+Host mint
+    Hostname 192.168.1.67
+    port 22
+    User radikmint
+Host kubuntu
+    Hostname 192.168.1.67
+    Port 22
+    User radik
+Host budgie
+    Hostname 192.168.1.67
+    Port 22
+    user radik
+Host aocwei
+    Hostname 192.168.1.81
+    Port 22
+    user radik
+
+
+
