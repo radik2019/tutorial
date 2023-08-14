@@ -78,3 +78,7 @@ Ultimo backup prodotto da cron 02/05/2023:
 		docker exec turmo_travel python3 manage.py makemigrations
 
 *******************************************************************************************************
+
+
+docker login dockerhub.greenshare.it
+

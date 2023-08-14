@@ -1,0 +1,21 @@
+
+3. con db_veaver ci connettiamo al db e si esegue questa query:
+	CREATE ROLE postgres WITH LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE REPLICATION;
+
+4.aprire il container del database e esegui il commando per eseguire il restore del backup del db:
+	pg_restore -Fc -U QvrqNadKnkJoyLwAwsRURhoUPihffPJm -d turmotravel -c < backup.tar.gz
+
+
+*******************************************************************************************************
+
+sudo su - postgres
+psql
+
+*******************************************************************************************************
+
+
+psql -U smarticket -d smartiket -f backup.sql
+
+*******************************************************************************************************
+
+
