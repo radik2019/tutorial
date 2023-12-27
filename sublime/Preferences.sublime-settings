@@ -1,0 +1,22 @@
+{
+	"font_size": 14,
+	"ignored_packages":
+	[
+		"Vintage",
+	],
+	"theme": "Adaptive.sublime-theme",
+	"predawn_tabs_small": true,
+	"color_scheme": "Monokai.sublime-color-scheme",
+	"auto_complete_commit_on_tab": true,
+	"word_wrap": true,
+
+	"index_files": true,
+	"themed_title_bar": true,
+	"hide_pointer_while_typing": true,
+	"gutter": true,
+	"margin": 0,
+	"fold_buttons": false,
+	"highlight_line": true,
+	"caret_style": "phase",
+
+}
