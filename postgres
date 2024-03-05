@@ -17,5 +17,9 @@ psql
 psql -U smarticket -d smartiket -f backup.sql
 
 *******************************************************************************************************
-
-
+container
+	su - postgres
+		dropdb saras_bus_reservation_local
+		createdb saras_bus_reservation_local
+	exit
+		psql -U postgres -d saras_bus_reservation_local -f db.sql
