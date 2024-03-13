@@ -5,8 +5,7 @@
 		"Vintage",
 	],
 	"theme": "Adaptive.sublime-theme",
-	"predawn_tabs_small": true,
-	"color_scheme": "Monokai.sublime-color-scheme",
+
 	"auto_complete_commit_on_tab": true,
 	"word_wrap": true,
 
@@ -19,4 +18,7 @@
 	"highlight_line": true,
 	"caret_style": "phase",
 
+	"color_scheme": "Dark Crayon.sublime-color-scheme",
+	"font_face": "Source Code Pro",
 }
+
