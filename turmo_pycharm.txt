@@ -82,3 +82,4 @@ Ultimo backup prodotto da cron 02/05/2023:
 
 docker login dockerhub.greenshare.it
 
+pg_restore -Fc -U postgres -d smarticket_local -c < ctm.binary
