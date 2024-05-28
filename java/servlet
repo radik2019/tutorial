@@ -1,0 +1,17 @@
+sudo apt install openjdk-11-jdk
+
+
+sudo apt install openjdk-11-jdk
+
+mvn clean package
+mvn clean compile
+mvn package
+sudo cp target/yourproject-1.0-SNAPSHOT.war /var/lib/tomcat9/webapps/
+sudo systemctl restart tomcat9
+
+
+http://localhost:8080/yourproject-1.0-SNAPSHOT/GTW
+
+
+
+sudo tail -f /var/log/tomcat9/catalina.out
