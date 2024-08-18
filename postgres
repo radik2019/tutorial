@@ -18,4 +18,8 @@ psql -U smarticket -d smartiket -f backup.sql
 
 *******************************************************************************************************
 
+docker run --name my_container_name -p 5432:5432 -e POSTGRES_PASSWORD=pgpwd4habr -d postgres:13.3
+
+docker run --name my_container_name -e POSTGRES_USER=habrpguser -e POSTGRES_PASSWORD=pgpwd4habr -e POSTGRES_DB=my_db_name -d postgres:13.3
+
 
