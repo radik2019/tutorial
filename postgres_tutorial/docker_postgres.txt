@@ -1,0 +1,539 @@
+Трудно представить современную разработку без контейнеризации. Docker и Kubernetes прочно обосновались на рынке, и, если вы ещё не знакомы с этими технологиями, им явно стоит уделить внимание.
+
+Запуск баз данных и других stateful приложений в контейнере – это тема интересная, но способная вызвать очередной Большой взрыв в комментариях. Оговорюсь сразу, мы не используем в production окружении PostgreSQL в Docker. Но делаем это в локальной разработке и на dev-стендах. Почему? Потому что это чертовски удобно!
+
+В этой статье я хочу рассмотреть типовые способы запуска ванильного (то есть чистого/оригинального) PostgreSQL в контейнере, а также проблемы и их возможные решения, с которыми может столкнуться software engineer. Статья задумывалась как небольшое руководство для новых ребят, приходящих в мою команду, но, уверен, будет полезна и более широкой аудитории.
+
+Прежде чем мы начнём
+Вам понадобится Docker на машине, где вы будете проводить эксперименты. Скачайте его с официального сайта и установите. Настоятельно рекомендуется использовать актуальную версию.
+
+Все приведенные в этой статье команды и скрипты запускались на версии Docker Desktop 3.5.2 и выше. Их работоспособность на старых версиях Docker не гарантируется.
+
+Работоспособность скриптов на более старых версиях Docker не гарантируется
+Работоспособность скриптов на более старых версиях Docker не гарантируется
+Так же подразумевается, что у вас есть базовые навыки работы с Docker. Если ещё нет, то для начала крайне желательно ознакомиться со статьями один и два.
+
+Где взять образы PostgreSQL?
+Официальные образы PostgreSQL опубликованы на Docker Hub. Там же можно найти базовые инструкции по использованию этих образов. Я буду опираться в том числе и на них.
+
+Hello Postgres
+Официальный образ Постгреса очень продвинутый и позволяет настраивать множество параметров. Для быстрого старта большинство из них можно оставить как есть, но вот пароль суперпользователя придётся задать явно:
+
+docker run --name habr-pg -e POSTGRES_PASSWORD=pgpwd4habr -d postgres
+Эта команда запустит нам контейнер PostgreSQL в фоновом (detached) режиме и присвоит ему имя habr-pg:
+
+Контейнер с PostgreSQL, запущенный в Docker
+Контейнер с PostgreSQL, запущенный в Docker
+Классно, не правда ли? А что мы можем делать с этой базой данных? К сожалению, на текущий момент не так уж и много. Через интерфейс Docker можно запустить CLI, подключиться к контейнеру и уже оттуда запустить, например, psql:
+
+psql --username=postgres --dbname=postgres
+Далее я буду использовать сокращенный вариант этой команды:
+
+psql -U postgres -d postgres
+И тут мы сталкиваемся с первой проблемой: что вернёт нам запрос select version();, выполненный в консоли? Мы не указали явным образом версию БД, которую хотим использовать. Давайте это исправим:
+
+docker run --name habr-pg-13.3 -e POSTGRES_PASSWORD=pgpwd4habr -d postgres:13.3
+Теперь вопросов об используемой версии БД не возникает, но работать с ней по-прежнему не очень удобно. Нам нужно сделать эту БД доступной извне, чтобы к ней могли подключаться приложения и IDE. Для этого нужно выставить наружу порт:
+
+docker run --name habr-pg-13.3 -p 5432:5432 -e POSTGRES_PASSWORD=pgpwd4habr -d postgres:13.3
+Отлично! С этого момента к базе данных можно подключиться, например, из IntelliJ IDEA:
+
+Настройка подключения к БД в IntelliJ IDEA
+Настройка подключения к БД в IntelliJ IDEA
+Сейчас мы используем пользователя и базу данных в контейнере, создаваемых по умолчанию, я же предпочитаю указывать их явно. Финальная версия команды для запуска будет иметь вид:
+
+docker run --name habr-pg-13.3 -p 5432:5432 -e POSTGRES_USER=habrpguser -e POSTGRES_PASSWORD=pgpwd4habr -e POSTGRES_DB=habrdb -d postgres:13.3
+psql можно запустить так: 
+
+=============================================================================================================
+
+
+  psql -U habrpguser -d habrdb
+
+=============================================================================================================
+
+
+И соответствующий compose-файл:
+
+=============================================================================================================
+
+
+version: "3.9"
+services:
+  postgres:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "habrdb"
+      POSTGRES_USER: "habrpguser"
+      POSTGRES_PASSWORD: "pgpwd4habr"
+    ports:
+      - "5432:5432"
+
+=============================================================================================================
+
+
+Инициализация структуры БД 
+К текущему моменту мы научились запускать в контейнере необходимую нам версию PostgreSQL, переопределять суперпользователя и создавать базу данных с нужным именем.
+
+Это хорошо, но чистая база данных вряд ли будет сильно полезна. Для работы/тестов/экспериментов нужно наполнить эту базу таблицами и другими объектами. Разумеется, всё это можно сделать вручную, но, согласитесь, гораздо удобнее, когда сразу после запуска вы автоматически получаете полностью готовую БД.
+
+Разработчики официального образа PostgreSQL естественно предусмотрели этот момент и предоставили нам специальную точку входа для инициализации базы данных - docker-entrypoint-initdb.d. Любые *.sql или *.sh файлы в этом каталоге будут рассматриваться как скрипты для инициализации БД. Здесь есть несколько нюансов:
+
+если БД уже была проинициализирована ранее, то никакие изменения к ней применяться не будут;
+
+если в каталоге присутствует несколько файлов, то они будут отсортированы по имени с использованием текущей локали (по умолчанию en_US.utf8).
+
+Инициализацию БД можно запустить через однострочник, но в этом случае требуется указывать абсолютный путь до каталога со скриптами:
+
+=============================================================================================================
+
+
+docker run --name habr-pg-13.3 -p 5432:5432 -e POSTGRES_USER=habrpguser -e POSTGRES_PASSWORD=pgpwd4habr -e POSTGRES_DB=habrdb -d -v "/absolute/path/to/directory-with-init-scripts":/docker-entrypoint-initdb.d postgres:13.3
+
+=============================================================================================================
+
+
+Например, на моей машине это выглядит так:
+
+=============================================================================================================
+
+
+docker run --name habr-pg-13.3 -p 5432:5432 -e POSTGRES_USER=habrpguser -e POSTGRES_PASSWORD=pgpwd4habr -e POSTGRES_DB=habrdb -d -v "/Users/ivahrusev/src/useful-sql-scripts/running_pg_in_docker/2. Init Database":/docker-entrypoint-initdb.d postgres:13.3
+
+=============================================================================================================
+
+
+В качестве обходного варианта можно использовать макрос, на лету определяя рабочую директорию, и запускать команду из каталога со скриптами:
+
+=============================================================================================================
+
+
+docker run --name habr-pg-13.3 -p 5432:5432 -e POSTGRES_USER=habrpguser -e POSTGRES_PASSWORD=pgpwd4habr -e POSTGRES_DB=habrdb -d -v "$(pwd)":/docker-entrypoint-initdb.d postgres:13.3
+
+=============================================================================================================
+
+
+Использование docker-compose файла в этом случае более удобно и позволяет указывать относительные пути:
+
+=============================================================================================================
+
+
+version: "3.9"
+services:
+  postgres:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "habrdb"
+      POSTGRES_USER: "habrpguser"
+      POSTGRES_PASSWORD: "pgpwd4habr"
+    volumes:
+      - .:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+
+=============================================================================================================
+
+
+Здесь хотелось бы акцентировать ваше внимание на одной простой вещи, о которой уже говорил в предыдущей статье: при создании миграций БД для ваших приложений отдавайте предпочтение чистому (plain) SQL. В этом случае их можно будет переиспользовать с минимальными затратами.
+
+А куда сохраняются мои данные?
+Базы данных – это в первую очередь история про персистентность. И,.. Хьюстон, кажется у нас проблема… К настоящему моменту мы никак не управляем долговременным хранением нашей базы данных. Эту задачу целиком на себя берёт Docker, автоматически создавая volume для контейнера с БД. Есть целый ворох причин, почему это плохо, начиная от банальной невозможности просматривать содержимое volume’ов в бесплатной версии Docker Desktop и заканчивая лимитами дискового пространства.
+
+Разумеется, хорошей практикой является полностью ручное управление физическим размещением создаваемых баз данных. Для этого нам нужно подмонтировать соответствующий каталог (куда будут сохраняться данные) в контейнер и при необходимости переопределить переменную окружения PGDATA:
+
+=============================================================================================================
+
+
+docker run --name habr-pg-13.3 -p 5432:5432 -e POSTGRES_USER=habrpguser -e POSTGRES_PASSWORD=pgpwd4habr -e POSTGRES_DB=habrdb -e PGDATA=/var/lib/postgresql/data/pgdata -d -v "/absolute/path/to/directory-with-data":/var/lib/postgresql/data -v "/absolute/path/to/directory-with-init-scripts":/docker-entrypoint-initdb.d postgres:13.3
+
+=============================================================================================================
+
+
+Вариант с макросом, использующий для инициализации БД скрипты из предыдущего раздела:
+
+=============================================================================================================
+
+
+docker run --name habr-pg-13.3 -p 5432:5432 -e POSTGRES_USER=habrpguser -e POSTGRES_PASSWORD=pgpwd4habr -e POSTGRES_DB=habrdb -e PGDATA=/var/lib/postgresql/data/pgdata -d -v "$(pwd)":/var/lib/postgresql/data -v "$(pwd)/../2. Init Database":/docker-entrypoint-initdb.d postgres:13.3
+
+=============================================================================================================
+
+
+Старый вариант, который в большинстве случаев не работает
+Update. Июнь 2023. Переход на named volumes
+
+С однострочниками на этом закончим. Все дальнейшие шаги будем осуществлять только через compose-файл:
+
+=============================================================================================================
+
+
+version: "3.9"
+services:
+  postgres:
+    image: postgres:14.8-alpine3.18
+    environment:
+      POSTGRES_DB: "habrdb"
+      POSTGRES_USER: "habrpguser"
+      POSTGRES_PASSWORD: "pgpwd4habr"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ../2. Init Database:/docker-entrypoint-initdb.d
+      - habrdb-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  habrdb-data:
+
+=============================================================================================================
+
+
+Healthcheck? Нет, не слышал…
+Проверка состояния/работоспособности – healthcheck – вполне устоявшийся архитектурный шаблон, который вы должны взять на вооружение для всех ваших приложений. База данных, запускаемая в контейнере, не является исключением.
+
+Основная задача healthcheck’а – как можно скорее уведомить среду, управляющую контейнером, о том, что с контейнером что-то не так. И самая простая стратегия решения проблемы – перезапуск контейнера.
+
+Так же стоит сразу позаботиться об ограничении ресурсов для контейнера с БД. Для экспериментов и локального запуска вполне подойдёт секция resources (флаг --compatibility больше не требуется).
+
+Healthcheck для PostgreSQL обычно основывается на использовании утилиты pg_isready как показано ниже:
+
+=============================================================================================================
+
+
+version: "3.9"
+services:
+  postgres:
+    image: postgres:14.8-alpine3.18
+    environment:
+      POSTGRES_DB: "habrdb"
+      POSTGRES_USER: "habrpguser"
+      POSTGRES_PASSWORD: "pgpwd4habr"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ../2. Init Database:/docker-entrypoint-initdb.d
+      - habrdb-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U habrpguser -d habrdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+
+volumes:
+  habrdb-data:
+
+=============================================================================================================
+
+
+А если хочу изменить параметры БД? 
+Для администраторов PostgreSQL не секрет, что конфигурация СУБД из коробки далека от идеальной и не очень подходит для эксплуатации. Я немного рассказывал об этом в своей статье про pg-index-health: ряд параметров нужно изменить в обязательном порядке, так как они влияют на производительность. Так же существует большое количество расширений для Постгреса, которые сделают эксплуатацию БД более удобной, наблюдаемой и управляемой. Одно из таких расширений - pg_stat_statements (кстати, оно пригодится нам позднее для мониторинга БД).
+
+Ванильный образ PostgreSQL позволяет тюнить параметры и добавлять расширения на старте контейнера БД:
+
+=============================================================================================================
+
+
+version: "3.9"
+services:
+  postgres:
+    image: postgres:14.8-alpine3.18
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=50"
+      - "-c"
+      - "shared_buffers=1GB"
+      - "-c"
+      - "effective_cache_size=4GB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=512MB"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "temp_file_limit=10GB"
+      - "-c"
+      - "log_min_duration_statement=200ms"
+      - "-c"
+      - "idle_in_transaction_session_timeout=10s"
+      - "-c"
+      - "lock_timeout=1s"
+      - "-c"
+      - "statement_timeout=60s"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.max=10000"
+      - "-c"
+      - "pg_stat_statements.track=all"
+    environment:
+      POSTGRES_DB: "habrdb"
+      POSTGRES_USER: "habrpguser"
+      POSTGRES_PASSWORD: "pgpwd4habr"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ../2. Init Database:/docker-entrypoint-initdb.d
+      - habrdb-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U habrpguser -d habrdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+
+volumes:
+  habrdb-data:
+
+
+=============================================================================================================
+
+
+Update. Февраль 2024. Разумеется, можно указать свой postgresql.conf. Пример тут.
+
+Посмотреть список установленных расширений можно с помощью запроса select * from pg_extension;.
+
+А команда show позволит узнать текущее значение того или иного параметра, например: show random_page_cost;.
+
+Не люблю консоль; дайте мне человеческий UI!
+Далеко не все пользователи любят работать с БД из командной строки. Очень многие предпочитают использовать для этого продвинутый графический интерфейс, например pgAdmin.
+
+Запустить ещё один контейнер, в котором будет бежать GUI, не сложно, но для удобной коммуникации с БД их лучше объединить в одну сеть:
+
+=============================================================================================================
+
+
+version: "3.9"
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:14.8-alpine3.18
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=50"
+      - "-c"
+      - "shared_buffers=1GB"
+      - "-c"
+      - "effective_cache_size=4GB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=512MB"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "temp_file_limit=10GB"
+      - "-c"
+      - "log_min_duration_statement=200ms"
+      - "-c"
+      - "idle_in_transaction_session_timeout=10s"
+      - "-c"
+      - "lock_timeout=1s"
+      - "-c"
+      - "statement_timeout=60s"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.max=10000"
+      - "-c"
+      - "pg_stat_statements.track=all"
+    environment:
+      POSTGRES_DB: "habrdb"
+      POSTGRES_USER: "habrpguser"
+      POSTGRES_PASSWORD: "pgpwd4habr"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ../2. Init Database:/docker-entrypoint-initdb.d
+      - habrdb-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U habrpguser -d habrdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+    networks:
+      - postgres
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4:7.2
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "habrpguser@habr.com"
+      PGADMIN_DEFAULT_PASSWORD: "pgadminpwd4habr"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+    networks:
+      - postgres
+
+volumes:
+  habrdb-data:
+  pgadmin-data:
+
+networks:
+  postgres:
+    driver: bridge
+
+=============================================================================================================
+
+
+pgAdmin стартует на порту 5050: перейдя на нужный адрес, можно будет настроить подключение к БД.
+
+К БД можно подключиться как по имени контейнера, так и по имени сервиса
+К БД можно подключиться как по имени контейнера, так и по имени сервиса
+А как насчёт мониторинга?
+В современной разработке любой микросервис или инфраструктурный компонент должен быть поставлен на мониторинг, то есть непрерывно отдавать метрики - ключевые показатели, позволяющие определить, как ведёт себя система в данный момент времени.
+
+PostgreSQL не имеет встроенной интеграции с системами мониторинга наподобие Prometheus (или Zabbix). Вместо этого он полагается на использование внешних агентов - экспортеров. Мы у себя активно используем postgres_exporter, позволяющий добавлять свои собственные sql-запросы и кастомные метрики на их основе:
+
+
+=============================================================================================================
+
+
+version: "3.9"
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:14.8-alpine3.18
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=50"
+      - "-c"
+      - "shared_buffers=1GB"
+      - "-c"
+      - "effective_cache_size=4GB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=512MB"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "temp_file_limit=10GB"
+      - "-c"
+      - "log_min_duration_statement=200ms"
+      - "-c"
+      - "idle_in_transaction_session_timeout=10s"
+      - "-c"
+      - "lock_timeout=1s"
+      - "-c"
+      - "statement_timeout=60s"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.max=10000"
+      - "-c"
+      - "pg_stat_statements.track=all"
+    environment:
+      POSTGRES_DB: "habrdb"
+      POSTGRES_USER: "habrpguser"
+      POSTGRES_PASSWORD: "pgpwd4habr"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ../2. Init Database:/docker-entrypoint-initdb.d
+      - habrdb-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U habrpguser -d habrdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+    networks:
+      - postgres
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4:7.2
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "habrpguser@habr.com"
+      PGADMIN_DEFAULT_PASSWORD: "pgadminpwd4habr"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+    networks:
+      - postgres
+
+  postgres_exporter:
+    container_name: exporter_container
+    image: prometheuscommunity/postgres-exporter:v0.10.1
+    environment:
+      DATA_SOURCE_URI: "postgres:5432/habrdb?sslmode=disable"
+      DATA_SOURCE_USER: "habrpguser"
+      DATA_SOURCE_PASS: "pgpwd4habr"
+      PG_EXPORTER_EXTEND_QUERY_PATH: "/etc/postgres_exporter/queries.yaml"
+    volumes:
+      - ./queries.yaml:/etc/postgres_exporter/queries.yaml:ro
+    ports:
+      - "9187:9187"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 500M
+    networks:
+      - postgres
+
+volumes:
+  habrdb-data:
+  pgadmin-data:
+
+networks:
+  postgres:
+    driver: bridge
+
+=============================================================================================================
+
+
+
+После запуска скрипта экспортер будет доступен на порту 9187 и отдавать метрики в формате Prometheus:
