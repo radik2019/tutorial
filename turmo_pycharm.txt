@@ -83,3 +83,10 @@ Ultimo backup prodotto da cron 02/05/2023:
 docker login dockerhub.greenshare.it
 
 pg_restore -Fc -U postgres -d smarticket_local -c < ctm.binary
+
+
+docker cp /home/radik/postgres/20240820_085501/bckp.binary 4bbbff8a2597:bckp.binary
+pg_restore -Fc -U postgres -d infomobile_local -c < bckp.binary
+
+
+infomobile_local
