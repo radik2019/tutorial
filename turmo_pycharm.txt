@@ -68,7 +68,7 @@ Ultimo backup prodotto da cron 02/05/2023:
 	CREATE ROLE postgres WITH LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE REPLICATION;
 
 4.aprire il container del database e esegui il commando per eseguire il restore del backup del db:
-	pg_restore -Fc -U postgres -d turmotravel -c < backup.tar.gz
+	pg_restore -Fc -U postgres -d turmotravel -c < bckp.binary
 
 5.Entrare nel container "turmo_travel" e esegui
 	-Crea un superuser
@@ -90,3 +90,14 @@ pg_restore -Fc -U postgres -d infomobile_local -c < bckp.binary
 
 
 infomobile_local
+
+
+
+
+docker cp /home/radik/Desktop/Work/backups/turmo/bckp.binary e18b31824d2e:bckp.binary
+docker exec -it e18b31824d2e sh
+pg_restore -Fc -U postgres -d turmotravel -c < bckp.binary
+
+http://0.0.0.0:8088/reservations/230515/make_child/
+core/managers/reservations.py:566
+if not field_name in ["id", "transit_trip", "status"]:
