@@ -1,0 +1,5 @@
+Comando per cancellare tutte le chiavi con il pattern 'my_pattern'
+
+    redis-cli EVAL "for _,k in ipairs(redis.call('keys', '*my_pattern*')) do redis.call('del', k) end" 0
+
+    

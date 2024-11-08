@@ -1,0 +1,67 @@
+>>> OTP_BUILD_COMMAND
+'java -Xmx2G -jar /home/radik/Desktop/Work/django/otp/otp_service_project/otp-1.4.0-shaded.jar --build /home/radik/Documents/gtfs'
+>>> OTP_START_COMMAND
+'java -jar /home/radik/Desktop/Work/django/otp/otp_service_project/otp-1.4.0-shaded.jar --server --port 8081 --securePort 8081 --basePath /home/radik/Desktop/Work/django/otp/otp_service_project --graphs /home/radik/Documents/gtfs --router main_router'
+
+
+
+java -Xmx4G -jar /home/radik/Desktop/Work/django/otp/otp_service_project/otp-1.4.0-shaded.jar --build /home/radik/Documents/OTP/gtfs --router main_router
+
+
+
+
+java -jar /home/radik/Desktop/Work/django/otp/otp_service_project/otp-1.4.0-shaded.jar --server --port 8081 --securePort 8081 --basePath /home/radik/Desktop/Work/django/otp/otp_service_project --graphs /home/radik/Documents/OTP/gtfs --router main_router
+
+
+
+
+
+PYTHON
+-----------------------------------------------------
+import requests
+import random
+import json
+
+stops_response = requests.get(
+    "https://stage-bus-finder.greensharelab.com/api/v1/gtfs/stops/"
+)
+stops = stops_response.json()
+
+start_indx = random.randint(0, len(stops) - 1)
+end_indx = random.randint(0, len(stops) - 1)
+
+{
+    "stop_id": "CTM_SG1022",
+    "stop_code": "1022",
+    "stop_name": "San Giacomo (Altezza Civico 130)",
+    "stop_lat": 39.21944,
+    "stop_lon": 9.11939,
+}
+
+# url = "http://localhost:8000/plan-trip/?from_place=39.23588943481445,9.098163604736328&to_place=39.29775,8.9949"
+from_place = f'{stops[start_indx]["stop_lat"]},{stops[start_indx]["stop_lon"]}'
+
+to_place = f'{stops[end_indx]["stop_lat"]},{stops[end_indx]["stop_lon"]}'
+
+# from_place = "39.25103,9.14473"
+# to_place = "39.21585,9.3278"
+mode = "TRANSIT,WALK"
+
+OTP_BASE_URL = "http://localhost:8084/otp/routers/default"
+
+
+from_place = "39.25103,9.14473"
+to_place = "39.23085,9.1218"
+mode = "TRANSIT,WALK"
+
+params = {"fromPlace": from_place, "toPlace": to_place, "mode": mode, "format": "json"}
+
+response = requests.get(f"{OTP_BASE_URL}/plan", params=params)
+
+
+if response.status_code == 200:
+    print(json.dumps(response.json(), indent=2))
+else:
+    print({"error": "Unable to plan trip", "details": response.text})
+
+--------------------------------------------------------------
