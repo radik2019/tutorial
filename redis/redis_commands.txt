@@ -2,4 +2,36 @@ Comando per cancellare tutte le chiavi con il pattern 'my_pattern'
 
     redis-cli EVAL "for _,k in ipairs(redis.call('keys', '*my_pattern*')) do redis.call('del', k) end" 0
 
-    
+--------------------------------------------------------------------------------------------------------    
+Quando Redis raggiunge il limite di memoria, puoi specificare come gestire le chiavi esistenti con il parametro maxmemory-policy. Alcune opzioni comuni sono:
+
+    * noeviction:       Redis non rimuove le chiavi e restituisce un errore per nuovi comandi di scrittura.
+    * allkeys-lru:      Rimuove le chiavi meno utilizzate di recente.
+    * volatile-lru:     Rimuove le chiavi meno utilizzate di recente con un TTL impostato.
+    * allkeys-random:   Rimuove chiavi a caso.
+    * volatile-random:  Rimuove chiavi a caso con un TTL impostato.
+
+
+
+redis.conf
+    # Limite massimo di memoria
+    maxmemory 256mb
+
+    # Politica di espulsione delle chiavi
+    maxmemory-policy allkeys-lru
+
+
+--------------------------------------------------------------------------------------------------------
+
+Dockerfile
+    FROM redis:alpine
+    RUN mkdir -p /usr/local/etc/redis
+    COPY redis.conf /usr/local/etc/redis/redis.conf
+    CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+--------------------------------------------------------------------------------------------------------
+
+
+
+
+

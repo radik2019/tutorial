@@ -1,0 +1,17 @@
+
+
+
+# eseguire un commando nel pod 
+kubectl exec -n stage-misc -it stage-3d-platform-backend-79a8695b7b-g47dx -- bash
+
+kubectl exec -n <namespace> -it <pod_name> -- <command>
+
+# lista degli ambienti
+kubectl config get-contexts
+
+# applica modifiche a unservizio
+kubectl apply -f /path/deployment.yaml
+
+# log di un pod
+kubectl logs
+kubectl logs -c stage-3d-platform-backend-67ff749c45-rqtkw
